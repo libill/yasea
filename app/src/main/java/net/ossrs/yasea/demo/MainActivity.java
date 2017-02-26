@@ -103,7 +103,12 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                     btnPublish.setText("stop");
                     btnSwitchEncoder.setEnabled(false);
                 } else if (btnPublish.getText().toString().contentEquals("stop")) {
-                    mPublisher.stopPublish();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mPublisher.stopPublish();
+                        }
+                    }).start();
                     mPublisher.stopRecord();
                     btnPublish.setText("publish");
                     btnRecord.setText("record");
@@ -295,8 +300,9 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     }
 
     private void addLog(String log) {
-        if(tv_log.getText().toString().endsWith("Network weak")
-                || tv_log.getText().toString().endsWith(".")) {
+        if("Network weak".equalsIgnoreCase(log) &&
+                (tv_log.getText().toString().endsWith("Network weak")
+                || tv_log.getText().toString().endsWith("."))) {
             tv_log.append(".");
             if(tv_log.getText().toString().length() > 6000){
                 clearLog();
