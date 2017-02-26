@@ -1,61 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     tools:context="net.ossrs.yasea.demo.MainActivity">
 
     <net.ossrs.yasea.SrsCameraView
+        android:id="@+id/glsurfaceview_camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/glsurfaceview_camera"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true" />
+
+    <Button
+        android:id="@+id/publish"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="1dp"
+        android:layout_marginRight="1dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:background="@drawable/bg_button"
+        android:textColor="@android:color/white"
+        android:text="publish" />
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="publish"
-        android:id="@+id/publish"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="switch"
         android:id="@+id/swCam"
-        android:layout_alignBottom="@+id/publish"
-        android:layout_toRightOf="@+id/publish" />
-
-    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="record"
+        android:layout_marginRight="1dp"
+        android:layout_alignBottom="@+id/publish"
+        android:layout_toRightOf="@+id/publish"
+        android:background="@drawable/bg_button"
+        android:textColor="@android:color/white"
+        android:text="switch" />
+
+    <Button
         android:id="@+id/record"
-        android:layout_alignBottom="@+id/publish"
-        android:layout_toRightOf="@id/swCam" />
-
-    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="soft encoder"
-        android:id="@+id/swEnc"
+        android:layout_marginRight="1dp"
         android:layout_alignBottom="@+id/publish"
-        android:layout_toRightOf="@id/record"
+        android:layout_toRightOf="@id/swCam"
+        android:background="@drawable/bg_button"
+        android:textColor="@android:color/white"
+        android:text="record" />
+
+    <Button
+        android:id="@+id/swEnc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="1dp"
+        android:layout_alignBottom="@+id/publish"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"/>
+        android:layout_toRightOf="@id/record"
+        android:background="@drawable/bg_button"
+        android:textColor="@android:color/white"
+        android:text="soft encoder" />
+
+
+    <Button
+        android:id="@+id/bt_log"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="1dp"
+        android:layout_marginRight="1dp"
+        android:layout_above="@+id/swEnc"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/bg_button"
+        android:textColor="@android:color/white"
+        android:text="log" />
+
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fadingEdge="none"
+        android:paddingBottom="50dp">
+
+        <TextView
+            android:id="@+id/tv_log"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fadingEdge="none"
+            android:textSize="15sp" />
+    </ScrollView>
+
 
     <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="14dp"
         android:id="@+id/url"
-        android:textColor="@color/accent_material_light" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/accent_material_light"
+        android:textSize="15dp" />
 
 </RelativeLayout>

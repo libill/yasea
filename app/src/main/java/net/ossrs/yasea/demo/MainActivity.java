@@ -7,6 +7,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.faucamp.simplertmp.RtmpHandler;
@@ -29,7 +31,7 @@ import java.net.SocketException;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpListener,
-                        SrsRecordHandler.SrsRecordListener, SrsEncodeHandler.SrsEncodeListener {
+        SrsRecordHandler.SrsRecordListener, SrsEncodeHandler.SrsEncodeListener {
 
     private static final String TAG = "Yasea";
 
@@ -37,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     Button btnSwitchCamera = null;
     Button btnRecord = null;
     Button btnSwitchEncoder = null;
+    TextView tv_log;
+    Button bt_log;
 
     private SharedPreferences sp;
     private String rtmpUrl = "rtmp://ossrs.net/" + getRandomAlphaString(3) + '/' + getRandomAlphaDigitString(5);
@@ -66,6 +70,9 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         btnSwitchCamera = (Button) findViewById(R.id.swCam);
         btnRecord = (Button) findViewById(R.id.record);
         btnSwitchEncoder = (Button) findViewById(R.id.swEnc);
+        tv_log = (TextView) findViewById(R.id.tv_log);
+        bt_log = (Button) findViewById(R.id.bt_log);
+        tv_log.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         mPublisher = new SrsPublisher((SrsCameraView) findViewById(R.id.glsurfaceview_camera));
         mPublisher.setEncodeHandler(new SrsEncodeHandler(this));
@@ -79,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
             @Override
             public void onClick(View v) {
                 if (btnPublish.getText().toString().contentEquals("publish")) {
+                    clearLog();
                     rtmpUrl = efu.getText().toString();
                     SharedPreferences.Editor editor = sp.edit();
                     editor.putString("rtmpUrl", rtmpUrl);
@@ -88,9 +96,9 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                     mPublisher.startCamera();
 
                     if (btnSwitchEncoder.getText().toString().contentEquals("soft encoder")) {
-                        Toast.makeText(getApplicationContext(), "Use hard encoder", Toast.LENGTH_SHORT).show();
+                        addLog("Use hard encoder");
                     } else {
-                        Toast.makeText(getApplicationContext(), "Use soft encoder", Toast.LENGTH_SHORT).show();
+                        addLog("Use soft encoder");
                     }
                     btnPublish.setText("stop");
                     btnSwitchEncoder.setEnabled(false);
@@ -140,6 +148,18 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                 }
             }
         });
+
+        bt_log.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(tv_log.getVisibility() == View.VISIBLE){
+                    tv_log.setVisibility(View.GONE);
+                } else {
+                    tv_log.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -270,9 +290,26 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         return sb.toString();
     }
 
+    private void clearLog() {
+        tv_log.setText("");
+    }
+
+    private void addLog(String log) {
+        if(tv_log.getText().toString().endsWith("Network weak")
+                || tv_log.getText().toString().endsWith(".")) {
+            tv_log.append(".");
+            if(tv_log.getText().toString().length() > 6000){
+                clearLog();
+            }
+        } else {
+            tv_log.append("\n");
+            tv_log.append(log);
+        }
+    }
+
     private void handleException(Exception e) {
         try {
-            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            addLog(e.getMessage());
             mPublisher.stopPublish();
             mPublisher.stopRecord();
             btnPublish.setText("publish");
@@ -287,11 +324,13 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
     @Override
     public void onRtmpConnecting(String msg) {
+        addLog(msg);
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onRtmpConnected(String msg) {
+        addLog(msg);
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
@@ -305,17 +344,18 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
     @Override
     public void onRtmpStopped() {
-        Toast.makeText(getApplicationContext(), "Stopped", Toast.LENGTH_SHORT).show();
+        addLog("Stopped");
     }
 
     @Override
     public void onRtmpDisconnected() {
-        Toast.makeText(getApplicationContext(), "Disconnected", Toast.LENGTH_SHORT).show();
+        addLog("Disconnected");
     }
 
     @Override
     public void onRtmpVideoFpsChanged(double fps) {
         Log.i(TAG, String.format("Output Fps: %f", fps));
+        addLog(String.format("Output Fps: %f", fps));
     }
 
     @Override
@@ -323,8 +363,10 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         int rate = (int) bitrate;
         if (rate / 1000 > 0) {
             Log.i(TAG, String.format("Video bitrate: %f kbps", bitrate / 1000));
+            addLog(String.format("Video bitrate: %f kbps", bitrate / 1000));
         } else {
             Log.i(TAG, String.format("Video bitrate: %d bps", rate));
+            addLog(String.format("Video bitrate: %d bps", rate));
         }
     }
 
@@ -333,8 +375,10 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         int rate = (int) bitrate;
         if (rate / 1000 > 0) {
             Log.i(TAG, String.format("Audio bitrate: %f kbps", bitrate / 1000));
+            addLog(String.format("Audio bitrate: %f kbps", bitrate / 1000));
         } else {
             Log.i(TAG, String.format("Audio bitrate: %d bps", rate));
+            addLog(String.format("Audio bitrate: %d bps", rate));
         }
     }
 
@@ -362,22 +406,22 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
     @Override
     public void onRecordPause() {
-        Toast.makeText(getApplicationContext(), "Record paused", Toast.LENGTH_SHORT).show();
+        addLog("Record paused");
     }
 
     @Override
     public void onRecordResume() {
-        Toast.makeText(getApplicationContext(), "Record resumed", Toast.LENGTH_SHORT).show();
+        addLog("Record resumed");
     }
 
     @Override
     public void onRecordStarted(String msg) {
-        Toast.makeText(getApplicationContext(), "Recording file: " + msg, Toast.LENGTH_SHORT).show();
+        addLog("Recording file: " + msg);
     }
 
     @Override
     public void onRecordFinished(String msg) {
-        Toast.makeText(getApplicationContext(), "MP4 file saved: " + msg, Toast.LENGTH_SHORT).show();
+        addLog("MP4 file saved: " + msg);
     }
 
     @Override
@@ -394,12 +438,12 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
     @Override
     public void onNetworkWeak() {
-        Toast.makeText(getApplicationContext(), "Network weak", Toast.LENGTH_SHORT).show();
+        addLog("Network weak");
     }
 
     @Override
     public void onNetworkResume() {
-        Toast.makeText(getApplicationContext(), "Network resume", Toast.LENGTH_SHORT).show();
+        addLog("Network resume");
     }
 
     @Override
