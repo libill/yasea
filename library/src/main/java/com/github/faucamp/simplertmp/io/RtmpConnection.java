@@ -144,6 +144,8 @@ public class RtmpConnection implements RtmpPublisher {
                     handleRxPacketLoop();
                 } catch (IOException ex) {
                     Logger.getLogger(RtmpConnection.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IllegalArgumentException ex){
+                    ex.printStackTrace();
                 }
             }
         });
