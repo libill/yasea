@@ -1,11 +1,12 @@
 package net.ossrs.yasea.demo;
 
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
     private static final String TAG = "Yasea";
 
+    EditText efu;
     Button btnPublish = null;
     Button btnSwitchCamera = null;
     Button btnRecord = null;
@@ -48,6 +50,37 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
     private SrsPublisher mPublisher;
 
+    private boolean isPublish = false;
+    private final int MSG_TRY_CONNECT = 1;
+    private final int TIME_MSG_TRY_CONNECT = 5000;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case MSG_TRY_CONNECT:
+                    mHandler.removeMessages(MSG_TRY_CONNECT);
+                    if(isPublish) {
+                        stopPublish();
+                        mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(isPublish) {
+                                    startPublish();
+                                }
+                            }
+                        }, 1000);
+                    }
+                    break;
+            }
+        }
+    };
+
+    private void sendConnectMSG(){
+        mHandler.removeMessages(MSG_TRY_CONNECT);
+        mHandler.sendEmptyMessageDelayed(MSG_TRY_CONNECT, TIME_MSG_TRY_CONNECT);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,14 +89,14 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         setContentView(R.layout.activity_main);
 
         // response screen rotation event
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 
         // restore data.
         sp = getSharedPreferences("Yasea", MODE_PRIVATE);
         rtmpUrl = sp.getString("rtmpUrl", rtmpUrl);
 
         // initialize url.
-        final EditText efu = (EditText) findViewById(R.id.url);
+        efu = (EditText) findViewById(R.id.url);
         efu.setText(rtmpUrl);
 
         btnPublish = (Button) findViewById(R.id.publish);
@@ -86,33 +119,11 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
             @Override
             public void onClick(View v) {
                 if (btnPublish.getText().toString().contentEquals("publish")) {
-                    clearLog();
-                    rtmpUrl = efu.getText().toString();
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putString("rtmpUrl", rtmpUrl);
-                    editor.apply();
-
-                    mPublisher.startPublish(rtmpUrl);
-                    mPublisher.startCamera();
-
-                    if (btnSwitchEncoder.getText().toString().contentEquals("soft encoder")) {
-                        addLog("Use hard encoder");
-                    } else {
-                        addLog("Use soft encoder");
-                    }
-                    btnPublish.setText("stop");
-                    btnSwitchEncoder.setEnabled(false);
+                    isPublish = true;
+                    startPublish();
                 } else if (btnPublish.getText().toString().contentEquals("stop")) {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mPublisher.stopPublish();
-                        }
-                    }).start();
-                    mPublisher.stopRecord();
-                    btnPublish.setText("publish");
-                    btnRecord.setText("record");
-                    btnSwitchEncoder.setEnabled(true);
+                    isPublish = false;
+                    stopPublish();
                 }
             }
         });
@@ -165,6 +176,34 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
             }
         });
 
+    }
+
+    private void startPublish(){
+        mHandler.removeMessages(MSG_TRY_CONNECT);
+        clearLog();
+        rtmpUrl = efu.getText().toString();
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("rtmpUrl", rtmpUrl);
+        editor.apply();
+
+        mPublisher.startPublish(rtmpUrl);
+        mPublisher.startCamera();
+
+        if (btnSwitchEncoder.getText().toString().contentEquals("soft encoder")) {
+            addLog("Use hard encoder");
+        } else {
+            addLog("Use soft encoder");
+        }
+        btnPublish.setText("stop");
+        btnSwitchEncoder.setEnabled(false);
+    }
+
+    private void stopPublish(){
+        mPublisher.stopPublish();
+        mPublisher.stopRecord();
+        btnPublish.setText("publish");
+        btnRecord.setText("record");
+        btnSwitchEncoder.setEnabled(true);
     }
 
     @Override
@@ -351,11 +390,13 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     @Override
     public void onRtmpStopped() {
         addLog("Stopped");
+        sendConnectMSG();
     }
 
     @Override
     public void onRtmpDisconnected() {
         addLog("Disconnected");
+        sendConnectMSG();
     }
 
     @Override
