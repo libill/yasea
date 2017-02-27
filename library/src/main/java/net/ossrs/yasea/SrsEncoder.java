@@ -341,27 +341,33 @@ public class SrsEncoder {
     }
 
     public void onGetPcmFrame(byte[] data, int size) {
-        ByteBuffer[] inBuffers = aencoder.getInputBuffers();
-        ByteBuffer[] outBuffers = aencoder.getOutputBuffers();
+        try {
+            if (aencoder != null) {
+                ByteBuffer[] inBuffers = aencoder.getInputBuffers();
+                ByteBuffer[] outBuffers = aencoder.getOutputBuffers();
 
-        int inBufferIndex = aencoder.dequeueInputBuffer(-1);
-        if (inBufferIndex >= 0) {
-            ByteBuffer bb = inBuffers[inBufferIndex];
-            bb.clear();
-            bb.put(data, 0, size);
-            long pts = System.nanoTime() / 1000 - mPresentTimeUs;
-            aencoder.queueInputBuffer(inBufferIndex, 0, size, pts, 0);
-        }
+                int inBufferIndex = aencoder.dequeueInputBuffer(-1);
+                if (inBufferIndex >= 0) {
+                    ByteBuffer bb = inBuffers[inBufferIndex];
+                    bb.clear();
+                    bb.put(data, 0, size);
+                    long pts = System.nanoTime() / 1000 - mPresentTimeUs;
+                    aencoder.queueInputBuffer(inBufferIndex, 0, size, pts, 0);
+                }
 
-        for (; ; ) {
-            int outBufferIndex = aencoder.dequeueOutputBuffer(aebi, 0);
-            if (outBufferIndex >= 0) {
-                ByteBuffer bb = outBuffers[outBufferIndex];
-                onEncodedAacFrame(bb, aebi);
-                aencoder.releaseOutputBuffer(outBufferIndex, false);
-            } else {
-                break;
+                for (; ; ) {
+                    int outBufferIndex = aencoder.dequeueOutputBuffer(aebi, 0);
+                    if (outBufferIndex >= 0) {
+                        ByteBuffer bb = outBuffers[outBufferIndex];
+                        onEncodedAacFrame(bb, aebi);
+                        aencoder.releaseOutputBuffer(outBufferIndex, false);
+                    } else {
+                        break;
+                    }
+                }
             }
+        } catch (IllegalStateException e){
+            e.printStackTrace();
         }
     }
 

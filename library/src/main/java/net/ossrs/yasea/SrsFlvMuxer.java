@@ -165,19 +165,21 @@ public class SrsFlvMuxer {
                 while (!Thread.interrupted()) {
                     while (!mFlvTagCache.isEmpty()) {
                         SrsFlvFrame frame = mFlvTagCache.poll();
-                        if (frame.is_sequenceHeader()) {
-                            if (frame.is_video()) {
-                                mVideoSequenceHeader = frame;
-                                sendFlvTag(mVideoSequenceHeader);
-                            } else if (frame.is_audio()) {
-                                mAudioSequenceHeader = frame;
-                                sendFlvTag(mAudioSequenceHeader);
-                            }
-                        } else {
-                            if (frame.is_video() && mVideoSequenceHeader != null) {
-                                sendFlvTag(frame);
-                            } else if (frame.is_audio() && mAudioSequenceHeader != null) {
-                                sendFlvTag(frame);
+                        if(frame != null) {
+                            if (frame.is_sequenceHeader()) {
+                                if (frame.is_video()) {
+                                    mVideoSequenceHeader = frame;
+                                    sendFlvTag(mVideoSequenceHeader);
+                                } else if (frame.is_audio()) {
+                                    mAudioSequenceHeader = frame;
+                                    sendFlvTag(mAudioSequenceHeader);
+                                }
+                            } else {
+                                if (frame.is_video() && mVideoSequenceHeader != null) {
+                                    sendFlvTag(frame);
+                                } else if (frame.is_audio() && mAudioSequenceHeader != null) {
+                                    sendFlvTag(frame);
+                                }
                             }
                         }
                     }
