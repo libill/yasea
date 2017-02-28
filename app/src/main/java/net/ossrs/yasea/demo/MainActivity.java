@@ -77,8 +77,10 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     };
 
     private void sendConnectMSG(){
-        mHandler.removeMessages(MSG_TRY_CONNECT);
-        mHandler.sendEmptyMessageDelayed(MSG_TRY_CONNECT, TIME_MSG_TRY_CONNECT);
+        if(mHandler != null) {
+            mHandler.removeMessages(MSG_TRY_CONNECT);
+            mHandler.sendEmptyMessageDelayed(MSG_TRY_CONNECT, TIME_MSG_TRY_CONNECT);
+        }
     }
 
     @Override
@@ -118,12 +120,18 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         btnPublish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (btnPublish.getText().toString().contentEquals("publish")) {
-                    isPublish = true;
-                    startPublish();
-                } else if (btnPublish.getText().toString().contentEquals("stop")) {
+                if(isPublish){
                     isPublish = false;
                     stopPublish();
+                    mHandler.removeCallbacksAndMessages(null);
+                    btnPublish.setText("publish");
+                    btnRecord.setText("record");
+                    btnSwitchEncoder.setEnabled(true);
+                } else {
+                    isPublish = true;
+                    btnPublish.setText("stop");
+                    btnSwitchEncoder.setEnabled(false);
+                    startPublish();
                 }
             }
         });
@@ -175,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                 }
             }
         });
-
+        mPublisher.switchCameraFace((mPublisher.getCamraId() + 1) % Camera.getNumberOfCameras());
     }
 
     private void startPublish(){
@@ -194,16 +202,11 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         } else {
             addLog("Use soft encoder");
         }
-        btnPublish.setText("stop");
-        btnSwitchEncoder.setEnabled(false);
     }
 
     private void stopPublish(){
         mPublisher.stopPublish();
         mPublisher.stopRecord();
-        btnPublish.setText("publish");
-        btnRecord.setText("record");
-        btnSwitchEncoder.setEnabled(true);
     }
 
     @Override
@@ -295,6 +298,11 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        isPublish = false;
+        if(mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+            mHandler = null;
+        }
         mPublisher.stopPublish();
         mPublisher.stopRecord();
     }
@@ -357,8 +365,6 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
             addLog(e.getMessage());
             mPublisher.stopPublish();
             mPublisher.stopRecord();
-            btnPublish.setText("publish");
-            btnRecord.setText("record");
             btnSwitchEncoder.setEnabled(true);
         } catch (Exception e1) {
             //
