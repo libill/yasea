@@ -217,12 +217,7 @@ public class SrsFlvMuxer {
         needToFindKeyFrame = true;
         Log.i(TAG, "SrsFlvMuxer closed");
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                disconnect();
-            }
-        }).start();
+        disconnect();
     }
 
     /**
